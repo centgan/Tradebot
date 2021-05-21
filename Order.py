@@ -27,7 +27,7 @@ def watch(orderlist):
     bid = float(curfile["prices"][0]["bids"][0]["price"])
     asks = float(curfile["prices"][0]["asks"][0]["price"])
     for i in orderlist:
-        if "buy" in i[0]:
+        if "buy" in i[1]:
             halfstopprep = (float(i[1]) - float(i[2])) / 2
             halfstop = float(i[1]) - halfstopprep
             uphalfprep = (float(i[3]) - float(i[1])) / 2
@@ -91,34 +91,54 @@ def buyorsell():
         if 12 < Other.timecheck("forward") <= 15:
             Trend.lower("M15", "GBP_AUD")
             data = Other.fetchjson("lower")
-            if data[0]["mid"]["c"] > prehigh and sl not in orderlist:
-                orderlist.append(["buy m15 close", bid, sl, takeprofit("buy", cur["mid"]["c"])])
+            if len(orderlist) == 0 and data[-2]["mid"]["c"] > prehigh:
+                orderlist.append(["buy m15 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
+                print("enter buy  m15 close with sl at", sl)
+            elif data[-2]["mid"]["c"] > prehigh and prehigh not in orderlist[-1]:
+                orderlist.append(["buy m15 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
                 print("enter buy  m15 close with sl at", sl)
         #5min close will have be modified later
-        elif 3 < Other.timecheck("forward") < 8:
+        elif 3 < Other.timecheck("forward") < 10:
             Trend.lower("M5", "GBP_AUD")
             data = Other.fetchjson("lower")
-            if data[-2]["mid"]["c"] > prehigh and sl not in orderlist:
-                orderlist.append(["buy m5 close", bid, sl, takeprofit("buy", cur["mid"]["c"])])
+            if len(orderlist) == 0 and data[-2]["mid"]["c"] > prehigh:
+                orderlist.append(["buy m5 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
+                print("enter buy  m15 close with sl at", sl)
+            elif data[-2]["mid"]["c"] > prehigh and prehigh not in orderlist[-1]:
+                orderlist.append(["buy m5 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
                 print("enter buy m5 close with sl at", sl)
-        elif Other.timecheck("forward") < 3 and sl not in orderlist:
-            orderlist.append(["buy m30 close", bid, sl, takeprofit("buy", cur["mid"]["c"])])
-            print("enter buy m30 close with sl at", sl)
+        elif Other.timecheck("forward") < 3:
+            if len(orderlist) == 0:
+                orderlist.append(["buy m30 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
+                print("enter buy m30 close with sl at", sl)
+            elif prehigh not in orderlist[-1]:
+                orderlist.append(["buy m30 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh])
+                print("enter buy m30 close with sl at", sl)
     elif float(cur["mid"]["c"]) < float(prelow):
         sl = stoploss("sell")
         if 12 < Other.timecheck("forward") <= 15:
             Trend.lower("M15", "GBP_AUD")
             data = Other.fetchjson("lower")
-            if data[0]["mid"]["c"] < prelow and sl not in orderlist:
-                orderlist.append(["sell m15 close", asks, sl, takeprofit("sell", cur["mid"]["c"])])
+            if len(orderlist) == 0 and data[0]["mid"]["c"] < prelow:
+                orderlist.append(["sell m15 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
+                print("enter sell m15 close with sl at", sl)
+            elif data[0]["mid"]["c"] < prelow and prelow not in orderlist[-1]:
+                orderlist.append(["sell m15 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
                 print("enter sell  m15 close with sl at", sl)
         elif 3 < Other.timecheck("forward") < 8:
             Trend.lower("M5", "GBP_AUD")
             data = Other.fetchjson("lower")
-            if data[-2]["mid"]["c"] < prelow and sl not in orderlist:
-                orderlist.append(["sell m5 close", asks, sl, takeprofit("sell", cur["mid"]["c"])])
+            if len(orderlist) == 0 and data[0]["mid"]["c"] < prelow:
+                orderlist.append(["sell m5 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
                 print("enter sell m5 close with sl at", sl)
-        elif Other.timecheck("forward") < 3 and sl not in orderlist:
-            orderlist.append(["sell m30 close", asks, sl, takeprofit("sell", cur["mid"]["c"])])
-            print("enter sell m30 close with sl at", sl)
+            elif data[-2]["mid"]["c"] < prelow and prelow not in orderlist[-1]:
+                orderlist.append(["sell m5 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
+                print("enter sell m5 close with sl at", sl)
+        elif Other.timecheck("forward") < 3:
+            if len(orderlist) == 0:
+                orderlist.append(["sell m30 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
+                print("enter sell m30 close with sl at", sl)
+            elif prelow not in orderlist[-1]:
+                orderlist.append(["sell m30 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow])
+                print("enter sell m30 close with sl at", sl)
     return orderlist
