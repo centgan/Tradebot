@@ -17,11 +17,10 @@ import Trend
 import Other
 import Order
 
-# data = [1, 2, 3, 4, 5, 6]
-# with open("Historicaldata.json", "w") as out:
-#     out.write(json.dumps(data, indent = 4))
-# with open("Historicaldata.json", "r") as read:
-#     print(json.load(read))
+
+
+# can optimize further by saying if current price is not close to previous high or low
+# then check every 30 seconds or min instead of checking constantly
 
 while True:
     Trend.dumphist("GBP_AUD", "M30")
@@ -29,42 +28,21 @@ while True:
     orderlist = Order.buyorsell()
     Order.watch(orderlist)
     print(orderlist)
-
-
-
-
-# for i in data:
-#     print(i["time"])
-#     result = trendassign(i)
-#     print(result[0])
-#     print(result[1])
-#dumphist("CAD_JPY", "M30")
-
-
-#Trend.dumphist("GBP_AUD", "M30")
-# listolist = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-# print(listolist)
-# i = 0
-# del listolist[i]
-# print(listolist)
 #
-# lowest = float(data[length]["mid"]["c"])
-# highest = float(data[length]["mid"]["c"])
-# lowestwick = float(data[length]["mid"]["c"])
-# highestwick = float(data[length]["mid"]["c"])
-# for i in range(length, -1, -1):
-#     if highest < float(data[i]["mid"]["c"]):
-#         highest = float(data[i]["mid"]["c"])
-#     if lowest > float(data[i]["mid"]["c"]):
-#         lowest = float(data[i]["mid"]["c"])
-#     if lowestwick > float(data[i]["mid"]["l"]):
-#         lowestwick = float(data[i]["mid"]["l"])
-#     if highestwick < float(data[i]["mid"]["h"]):
-#         highestwick = float(data[i]["mid"]["h"])
+# Trend.dumphist("GBP_AUD", "M30")
+# data = Other.fetchjson("his")
+# result = Trend.overall()
+# highandlow = result[2]
 #
-# print(highestwick)
-# print(highest)
-# print(lowestwick)
-# print(lowest)
+# curfile = Other.fetchjson("cur")
+# bid = float(curfile["prices"][0]["bids"][0]["price"])
+# asks = float(curfile["prices"][0]["asks"][0]["price"])
+# prehigh = highandlow[-1][0]
+# prelow = highandlow[-1][1]
+#
+# print(prehigh)
+# print(bid)
+# Order.buyorsell()
+
 #print(data["prices"][0]["bids"])
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
