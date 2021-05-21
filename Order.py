@@ -27,7 +27,7 @@ def watch(orderlist):
     bid = float(curfile["prices"][0]["bids"][0]["price"])
     asks = float(curfile["prices"][0]["asks"][0]["price"])
     for i in orderlist:
-        if "buy" in i[1]:
+        if "buy" in i:
             halfstopprep = (float(i[1]) - float(i[2])) / 2
             halfstop = float(i[1]) - halfstopprep
             uphalfprep = (float(i[3]) - float(i[1])) / 2
@@ -44,7 +44,7 @@ def watch(orderlist):
                 print("hit full stop loss", i)
             elif cur["complete"] == "true" and cur["color"] == "red" and datahis[-2]["color"] == "red":
                 print("closed in prediction of a reversal")
-        elif "sell" in i[0]:
+        elif "sell" in i:
             halfstopprep = (float(i[2]) - float(i[1])) / 2
             halfstop = float(i[1]) + halfstopprep
             uphalfprep = (float(i[1]) - float(i[3])) / 2
