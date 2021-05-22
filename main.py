@@ -2,6 +2,10 @@
 
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+# This is a sample Python script.
+
+# Press ⌃R to execute it or replace it with your code.
+# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
 import json
 import oandapyV20
@@ -28,6 +32,7 @@ while True:
     orderlist = Order.buyorsell()
     Order.watch(orderlist)
     print(orderlist)
+
 #
 # Trend.dumphist("GBP_AUD", "M30")
 # data = Other.fetchjson("his")
