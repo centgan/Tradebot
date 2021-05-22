@@ -19,7 +19,7 @@ def lower(timeframe, instrument):
     if timeframe == "M15":
         dict = []
         param = {
-            "from": "2021-05-14T20:30:00Z",#Other.timecheck("start"),
+            "from": Other.timecheck("start"),
             "granularity": "M15",
         }
         # for i in InstrumentsCandlesFactory(instrument=instrument, params=param):
