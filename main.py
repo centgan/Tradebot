@@ -20,20 +20,28 @@ from datetime import datetime, timedelta
 import Trend
 import Other
 import Order
-
-
+import time
 
 # can optimize further by saying if current price is not close to previous high or low
 # then check every 30 seconds or min instead of checking constantly
 
+pair_list = ["GBP_AUD", "NAS100_USD"]
+orderlist = []
+rev = 0
 while True:
-    Trend.dumphist("GBP_AUD", "M30")
-    Trend.dumpcur("GBP_AUD")
-    orderlist = Order.buyorsell()
-    Order.watch(orderlist)
-    print(orderlist)
+    cur = Other.timecheck("forward")
+    if 12 < cur < 15 or 27 < cur < 30:
+        for i in pair_list:
+            Trend.dumphist(pair_list, "M30")
+            Trend.dumpcur(pair_list)
+            orderlist = Order.buyorsell(pair_list)
+            rev = Order.watch(orderlist, rev, pair_list)
+    else:
+        print("still running", rev, orderlist)
+        time.sleep(30)
+# Trend.dumphist("NAS100_USD", "M30")
 
-#
+
 # Trend.dumphist("GBP_AUD", "M30")
 # data = Other.fetchjson("his")
 # result = Trend.overall()
