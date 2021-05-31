@@ -60,3 +60,16 @@ def timecheck(forback):
     elif forback == "start":
         rounded = time - (time - datetime.min) % timedelta(minutes=30)
         return rounded.strftime("%Y-%m-%dT%H:%M:00Z")
+    
+def converter(convertingto, amount, pair):
+    pip = {
+        "GBP_AUD": 0.0001,
+        "NAS100_USD": 1
+    }
+    amount = float(amount)
+    if convertingto == "pip":
+        base = pip[pair]
+        return float(amount / base)
+    elif convertingto == "price":
+        base = pip[pair]
+        return float(amount * base)
