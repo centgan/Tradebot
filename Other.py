@@ -53,10 +53,10 @@ def timecheck(forback):
     final = str(new - time).lstrip("0:")
     almost = final[:len(final) - 10]
     if forback == "forward":
-        return 13
+        return float(almost) + 1
         #return int(almost) + 1
     elif forback == "back":
-        return 30 - (int(almost) + 1)
+        return 30 - (float(almost) + 1)
     elif forback == "start":
         rounded = time - (time - datetime.min) % timedelta(minutes=30)
         return rounded.strftime("%Y-%m-%dT%H:%M:00Z")
