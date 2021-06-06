@@ -26,12 +26,17 @@ import Order
 # can optimize further by saying if current price is not close to previous high or low
 # then check every 30 seconds or min instead of checking constantly
 
+pair_list = ["GBP_AUD", "NAS100_USD"]
+orderlist = Other.fetchjson("order")
+rev = 0
+
 while True:
-    Trend.dumphist("GBP_AUD", "M30")
-    Trend.dumpcur("GBP_AUD")
-    orderlist = Order.buyorsell()
-    Order.watch(orderlist)
-    print(orderlist)
+    for i in ordderlist:
+        Trend.dumphist(i, "M30")
+        Trend.dumpcur(i)
+        Order.buyorsell(i)
+        rev = Order.watch(rev, pair_list)
+        print("still running", rev)
 
 #
 # Trend.dumphist("GBP_AUD", "M30")
