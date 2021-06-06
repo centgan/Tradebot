@@ -1,8 +1,10 @@
 import Trend
 import Other
 from datetime import datetime
+fullstop = None
 
-#The information here is for current price
+
+# The information here is for current price
 def stoploss(sellorbuy):
     data = Other.fetchjson("his")
     now = data[-1]
@@ -13,66 +15,126 @@ def stoploss(sellorbuy):
         sl = now["mid"]["h"]
         return sl
 
-def takeprofit(sellorbuy, cur):
+
+def takeprofit(sellorbuy, cur, pair):
     if sellorbuy == "sell":
-        cur = float(cur) - 0.0025
+        converted = Other.converter("price", 25, pair)
+        cur = float(cur) - converted
         return cur
     elif sellorbuy == "buy":
-        cur = float(cur) + 0.0025
+        converted = Other.converter("price", 25, pair)
+        cur = float(cur) + converted
         return cur
 
-def watch(orderlist):
+
+def watch(revenue, pair):
     datahis = Other.fetchjson("his")
+    orderdata = Other.fetchjson("order")
     cur = datahis[-1]
     curfile = Other.fetchjson("cur")
     bid = float(curfile["prices"][0]["bids"][0]["price"])
     asks = float(curfile["prices"][0]["asks"][0]["price"])
-    for i in orderlist:
-        if "buy" in i[0]:
-            halfstopprep = (float(i[1]) - float(i[2])) / 2
-            halfstop = float(i[1]) - halfstopprep
-            uphalfprep = (float(i[3]) - float(i[1])) / 2
-            uphalf = float(i[1]) + uphalfprep
-            if bid <= halfstop:
-                print("close half positions because of stop loss", i)
-                if bid > i[1]:
-                    print("add back to the position")
-            elif bid >= uphalf:
-                print("close half positions because of tp and move sl to 10 pips", i)
-            elif bid >= float(i[3]):
-                print("take profit full profits", i)
-            elif bid <= float(i[2]):
-                print("hit full stop loss", i)
-            elif cur["complete"] == "true" and cur["color"] == "red" and datahis[-2]["color"] == "red":
-                print("closed in prediction of a reversal")
-        elif "sell" in i[0]:
-            halfstopprep = (float(i[2]) - float(i[1])) / 2
-            halfstop = float(i[1]) + halfstopprep
-            uphalfprep = (float(i[1]) - float(i[3])) / 2
-            uphalf = float(i[1]) - uphalfprep
-            if asks >= halfstop:
-                print("close half positions because of stop loss", i)
-                if asks <= i[1]:
-                    print("add back to the position")
-            elif asks <= uphalf:
-                print("close half positions because of tp and move sl to 10 pips", i)
-            elif asks <= float(i[3]):
-                print("take profit full profits", i)
-                i.append("")
-            elif asks >= float(i[2]):
-                print("hit full stop loss", i)
-            elif cur["complete"] == "true" and cur["color"] == "green" and datahis[-2]["color"] == "green":
-                print("closed in prediction of a reversal")
+    for pairorder in orderdata:
+        for order in pairorder:
+            if order[0] == "buy":
+                if len(order) == 9 and "move" in order[8]:
+                    fullstop = float(order[1])
+                else:
+                    fullstop = float(order[2])
+                halfstopprep = (float(order[1]) - float(order[2])) / 2
+                halfstop = float(order[1]) - halfstopprep
+                sixer = float(order[1]) + Other.converter("price", 6, pair)
+                tener = float(order[1]) + Other.converter("price", 10, pair)
+                if bid <= halfstop and len(order) == 8:
+                    print("close half positions because of stop loss", order)
+                    order.append("half stop")
+                    piphalf = Other.converter("pip", halfstopprep, pair)
+                    return revenue - piphalf
+                elif bid <= fullstop:
+                    print("hit full stop loss", order)
+                    #full = Other.converter("pip", float(i[2]), pair)
+                    piphalf = Other.converter("pip", halfstopprep, pair)
+                    order[7] = "close"
+                    if len(order) == 10:
+                        upprep = float(order[2]) - float(order[1])
+                        up = Other.converter("pip", upprep, pair)
+                        return revenue + up
+                    else:
+                        return revenue - piphalf
+                elif bid > sixer and len(order) == 8:
+                    print("move stop loss to BE")
+                    order.append("move")
+                # elif bid >= float(order[3]):
+                #     print("take profit full profits", order)
+                #     full = Other.converter("pip", float(order[3]), pair)
+                #     order[7] = "close"
+                #     return revenue + (full - 10)
+                elif cur["complete"] == "true" and cur["color"] == "red" and datahis[-2]["color"] == "red":
+                    print("closed in prediction of a reversal")
+                    order[7] = "close"
+                elif len(order) == 9:
+                    if bid > order[1] and order[8] == "half stop":
+                        print("add back to the position")
+                        order.pop()
+                    elif bid > tener and order[8] == "move":
+                        print("close half position for profit")
+                        order.append("profit 10")
+                        return revenue + 10
+                elif len(order) == 10:
+                    if bid > (tener + Other.converter("price", 5, pair)):
+                        if datahis[-1]["color"] == "green" and Other.timecheck("forward") < 5:
+                            if datahis[-1]["Bottom wick"] < datahis[-1]["body"]:
+                                order[2] = float(datahis[-1]["mid"]["l"])
+            elif "sell" in order[0]:
+                if len(order) == 9 and "move" in order[8]:
+                    fullstop = float(order[1])
+                else:
+                    fullstop = float(order[2])
+                halfstopprep = (float(order[2]) - float(order[1])) / 2
+                halfstop = float(order[1]) + halfstopprep
+                sixer = float(order[1]) - Other.converter("price", 6, pair)
+                tener = float(order[1]) - Other.converter("price", 10, pair)
+                if asks >= halfstop and len(order) == 8:
+                    print("close half positions because of stop loss", order)
+                    order.append("half stop")
+                    piphalf = Other.converter("pip", halfstopprep, pair)
+                    return revenue - piphalf
+                elif asks >= fullstop:
+                    print("hit full stop loss", order)
+                    piphalf = Other.converter("pip", halfstopprep, pair)
+                    order[7] = "close"
+                    if len(order) == 10:
+                        upprep = float(order[1]) - float(order[2])
+                        up = Other.converter("pip", upprep, pair)
+                        return revenue + up
+                    else:
+                        return revenue - piphalf
+                elif asks < sixer and len(order) == 8:
+                    print("move stop loss to BE")
+                    order.append("move")
+                # elif asks <= float(order[3]):
+                #     print("take profit full profits", order)
+                #     full = Other.converter("pip", float(order[3]), pair)
+                #     order[7] = "close"
+                #     return revenue + (full - 10)
+                elif cur["complete"] == "true" and cur["color"] == "green" and datahis[-2]["color"] == "green":
+                    print("closed in prediction of a reversal")
+                    order[7] = "close"
+                elif len(order) == 9:
+                    if asks < order[1] and order[8] == "half stop":
+                        print("add back to the position")
+                        order.pop()
+                    elif bid < tener and order[8] == "move":
+                        print("close half position for profit")
+                        order.append("profit 10")
+                        return revenue + 10
+                elif len(order) == 10:
+                    if asks < (tener - Other.converter("price", 5, pair)):
+                        if datahis[-1]["color"] == "red" and Other.timecheck("forward") < 5:
+                            if datahis[-1]["Top wick"] < datahis[-1]["body"]:
+                                order[2] = float(datahis[-1]["mid"]["h"])
 
-## READ ME ##
-## first we need to get it so that only the order is only put in once think about
-# possible adding in another item in the list that says complete or executed##
-## next we need to add a function that adds back to the positions
-# so if hit the half way mark in the stop loss but reverses back to the open price
-# the we add back to the position ensuring that we make more profit##
-
-orderlist = []
-def buyorsell():
+def buyorsell(pair):
     result = Trend.overall()
     zone = result[0]
     order = result[1]
@@ -88,65 +150,92 @@ def buyorsell():
     asks = float(curfile["prices"][0]["asks"][0]["price"])
     prehigh = highandlow[-1][0]
     prelow = highandlow[-1][1]
-    # pre = data[-2]
+
+    orderdata = Other.fetchjson("order")
+
     if float(cur["mid"]["c"]) > float(prehigh):
-        #other.timecheck results in the time remaining NOT the time it has taken
+        #other.timecheck("forward") results in the time remaining NOT the time it has taken
         sl = stoploss("buy")
-        if 12 < Other.timecheck("forward") <= 15:
-            Trend.lower("M15", "GBP_AUD")
+        if Other.timecheck("forward") == 15:
+            Trend.lower("M15", pair)
             data = Other.fetchjson("lower")
-            if len(orderlist) == 0 and data[-2]["mid"]["c"] > prehigh:
-                orderlist.append(["buy m15 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
-                print("enter buy  m15 close with sl at", sl)
-            elif data[-2]["mid"]["c"] > prehigh and prehigh != orderlist[-1][4]:#and str(prehigh) != orderlist[-1][4]:
-                orderlist.append(["buy m15 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
-                print("enter buy  m15 close with sl at", sl)
-        #5min close will have be modified later
-        elif 3 < Other.timecheck("forward") < 10:
-            Trend.lower("M5", "GBP_AUD")
-            data = Other.fetchjson("lower")
-            if len(orderlist) == 0 and data[-2]["mid"]["c"] > prehigh:
-                orderlist.append(["buy m5 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
-                print("enter buy  m15 close with sl at", sl)
-            elif data[-2]["mid"]["c"] > prehigh and prehigh != orderlist[-1][4]:#prehigh not in orderlist[-1]:
-                orderlist.append(["buy m5 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
-                print("enter buy m5 close with sl at", sl)
-        elif Other.timecheck("forward") < 3:
-            result = Other.fetchjson("his")
-            data = result[-1]["time"]
-            if len(orderlist) == 0:
-                orderlist.append(["buy m30 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
+            if len(orderdata[0][pair]) == 0 and data[-2]["mid"]["c"] > prehigh:
+                orderdata[0][pair].append(["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                print("enter buy m15 close with sl at", sl)
+                Other.write("order", orderdata)
+                return
+            else:
+                if orderdata[0][pair][-1][1] != "buy":
+                    if len(orderdata[0][pair]) == 1 and data[-2]["mid"]["c"] > prehigh:
+                        orderdata[0][pair].append(["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                        print("enter buy m15 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+                    elif len(orderdata[0][pair]) >= 2 and orderdata[0][pair][-2][1] != "buy" and data[-2]["mid"]["c"] > prehigh:
+                        orderdata[0][pair].append(["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                        print("enter buy m15 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+
+        elif Other.timecheck("forward") == 30:
+            if len(orderdata[0][pair]) == 0 and datahis[-2]["mid"]["c"] > prehigh:
+                orderdata[0][pair].append(["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
                 print("enter buy m30 close with sl at", sl)
-            elif prehigh != orderlist[-1][4]:
-                orderlist.append(["buy m30 close", bid, sl, takeprofit("buy", cur["mid"]["c"]), prehigh, proper])
-                print("enter buy m30 close with sl at", sl)
+                Other.write("order", orderdata)
+                return
+            else:
+                if orderdata[0][pair][-1][1] != "buy":
+                    if len(orderdata[0][pair]) == 1 and datahis[-2]["mid"]["c"] > prehigh:
+                        orderdata[0][pair].append(
+                            ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                        print("enter buy m30 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+                    elif len(orderdata[0][pair]) >= 2 and orderdata[0][pair][-2][1] != "buy" and datahis[-2]["mid"]["c"] > prehigh:
+                        orderdata[0][pair].append(
+                            ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                        print("enter buy m30 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+
     elif float(cur["mid"]["c"]) < float(prelow):
         sl = stoploss("sell")
-        if 12 < Other.timecheck("forward") <= 15:
-            Trend.lower("M15", "GBP_AUD")
+        if Other.timecheck("forward") == 15:
+            Trend.lower("M15", pair)
             data = Other.fetchjson("lower")
-            if len(orderlist) == 0 and data[0]["mid"]["c"] < prelow:
-                orderlist.append(["sell m15 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
+            if len(orderdata[0][pair]) == 0 and data[-2]["mid"]["c"] < prelow:
+                orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
                 print("enter sell m15 close with sl at", sl)
-            elif data[0]["mid"]["c"] < prelow and prelow != orderlist[-1][4]:#prelow not in orderlist[-1]:
-                orderlist.append(["sell m15 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
-                print("enter sell  m15 close with sl at", sl)
-        elif 3 < Other.timecheck("forward") < 8:
-            Trend.lower("M5", "GBP_AUD")
-            data = Other.fetchjson("lower")
-            if len(orderlist) == 0 and data[0]["mid"]["c"] < prelow:
-                orderlist.append(["sell m5 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
-                print("enter sell m5 close with sl at", sl)
-            elif data[-2]["mid"]["c"] < prelow and prelow != orderlist[-1][4]:#prelow not in orderlist[-1]:
-                orderlist.append(["sell m5 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
-                print("enter sell m5 close with sl at", sl)
-        elif Other.timecheck("forward") < 3:
-            data = Other.fetchjson("his")
-            result = data[-1]["time"]
-            if len(orderlist) == 0:
-                orderlist.append(["sell m30 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
+                Other.write("order", orderdata)
+                return
+            else:
+                if orderdata[0][pair][-1][1] != "sell":
+                    if len(orderdata[0][pair]) == 1 and data[-2]["mid"]["c"] < prelow:
+                        orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                        print("enter sell m15 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+                    elif len(orderdata[0][pair]) >= 2 and orderdata[0][pair][-2][1] != "sell" and data[-2]["mid"]["c"] < prelow:
+                        orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                        print("enter sell m15 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+
+        elif Other.timecheck("forward") == 30:
+            if len(datahis[0][pair]) == 0 and datahis[-2]["mid"]["c"] < prelow:
+                orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
                 print("enter sell m30 close with sl at", sl)
-            elif prelow != orderlist[-1][4]:#prelow not in orderlist[-1]:
-                orderlist.append(["sell m30 close", asks, sl, takeprofit("sell", cur["mid"]["c"]), prelow, proper])
-                print("enter sell m30 close with sl at", sl)
-    return orderlist
+                Other.write("order", orderdata)
+                return
+            else:
+                if orderdata[0][pair][-1][1] != "sell":
+                    if len(orderdata[0][pair]) == 1 and datahis[-2]["mid"]["c"] < prelow:
+                        orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                        print("enter sell m30 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
+                    elif len(orderdata[0][pair]) >= 2 and orderdata[0][pair][-2][1] != "sell" and datahis[-2]["mid"]["c"] < prelow:
+                        orderdata[0][pair].append(["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                        print("enter sell m30 close with sl at", sl)
+                        Other.write("order", orderdata)
+                        return
