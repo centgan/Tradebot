@@ -46,6 +46,27 @@ def fetchjson(doc):
         with open("importantinfo.json", "r") as read:
             data = json.load(read)
             return data
+    elif doc == "order":
+        with open("Orderlist.json", "r") as read:
+            data = json.load(read)
+            return data
+
+def write(file, data):
+    if file == "cur":
+        with open("cur.json", "w") as out:
+            out.write(json.dumps(data, indent=4))
+    elif file == "his":
+        with open("Historicaldata.json", "w") as out:
+            out.write(json.dumps(data, indent=4))
+    elif file == "lower":
+        with open("lowertime.json", "w") as out:
+            out.write(json.dumps(data, indent=4))
+    elif file == "important":
+        with open("importantinfo.json.json", "w") as out:
+            out.write(json.dumps(data, indent=4))
+    elif file == "order":
+        with open("Orderlist.json", "w") as out:
+            out.write(json.dumps(data, indent=4))
 
 def timecheck(forback):
     time = datetime.now()
@@ -54,9 +75,21 @@ def timecheck(forback):
     almost = final[:len(final) - 10]
     if forback == "forward":
         return float(almost) + 1
-        #return int(almost) + 1
     elif forback == "back":
         return 30 - (float(almost) + 1)
     elif forback == "start":
         rounded = time - (time - datetime.min) % timedelta(minutes=30)
         return rounded.strftime("%Y-%m-%dT%H:%M:00Z")
+
+def converter(convertingto, amount, pair):
+    pip = {
+        "GBP_AUD": 0.0001,
+        "NAS100_USD": 1
+    }
+    amount = float(amount)
+    if convertingto == "pip":
+        base = pip[pair]
+        return round(float(amount / base), 1)
+    elif convertingto == "price":
+        base = pip[pair]
+        return round(float(amount * base), 1)
