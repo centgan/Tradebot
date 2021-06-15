@@ -150,6 +150,62 @@ def watch(revenue, pair):
                                 return revenue
     return revenue 
 
+def buyorsellnew(pair):
+    result = Trend.overall()
+    highandlow = result[2]
+
+    time = datetime.now()
+    proper = time.strftime("%H:%M:%S")
+
+    datahis = Other.fetchjson("his")
+    orderdata = Other.fetchjson("order")
+    cur = datahis[-1]
+    curfile = Other.fetchjson("cur")
+    bid = float(curfile["prices"][0]["bids"][0]["price"])
+    asks = float(curfile["prices"][0]["asks"][0]["price"])
+    prehigh = highandlow[-1][0]
+    prelow = highandlow[-1][1]
+
+    if Other.timecheck("hour") == 60:
+        if datahis[-2]["mid"]["c"] > prehigh:
+            sl = stoploss("buy")
+            if len(orderdata[pair]) == 0:
+                orderdata[pair].append(
+                    ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                print("enter buy at", bid, sl, pair)
+                Other.write("order", orderdata)
+            else:
+                if len(orderdata[pair]) == 1 and orderdata[pair][-1][1] != "buy":
+                    orderdata[pair].append(
+                        ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                    print("enter buy at", bid, sl, pair)
+                    Other.write("order", orderdata)
+                elif len(orderdata[pair]) >= 2:
+                    if orderdata[pair][-1][1] != "buy" and orderdata[pair][-2][1] != "buy":
+                        orderdata[pair].append(
+                            ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+                        print("enter buy at", bid, sl, pair)
+                        Other.write("order", orderdata)
+        elif datahis[-2]["mid"]["c"] < prehigh:
+            sl = stoploss("sell")
+            if len(orderdata[pair]) == 0:
+                orderdata[pair].append(
+                    ["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                print("enter sell at", asks, sl, pair)
+                Other.write("order", orderdata)
+            else:
+                if len(orderdata[pair]) == 1 and orderdata[pair][-1][1] != "sell":
+                    orderdata[pair].append(
+                        ["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                    print("enter sell at", asks, sl, pair)
+                    Other.write("order", orderdata)
+                elif len(orderdata[pair]) >= 2:
+                    if orderdata[pair][-1][1] != "sell" and orderdata[pair][-2][1] != "sell":
+                        orderdata[pair].append(
+                            ["sell", asks, sl, takeprofit("sell", cur["mid"]["c"], pair), pair, prelow, proper, "open"])
+                        print("enter sell at", asks, sl, pair)
+                        Other.write("order", orderdata)
+
 def buyorsell(pair):
     result = Trend.overall()
     zone = result[0]
