@@ -33,10 +33,11 @@ rev = 0
 while True:
     for i in ordderlist:
         Trend.dumphist(i, "M30")
-        Trend.dumpcur(i)
-        Order.buyorsell(i)
-        rev = Order.watch(rev, pair_list)
-        print("still running", rev)
+        #Trend.dumpcur(i)
+        Order.buyorsellnew(i)
+        
+#         rev = Order.watch(rev, pair_list)
+#         print("still running", rev)
 
 #
 # Trend.dumphist("GBP_AUD", "M30")
