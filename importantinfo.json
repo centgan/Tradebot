@@ -1,8 +1,5 @@
 {
-  "CAD_JPY": {
-    "zoneleeway": "0.02"
-  },
-  "GBP_AUD": {
-    "zoneleeway": "0.0002"
-  }
+    "GBP_AUD": [],
+    "GBP_USD": [],
+    "NAS100_USD": []
 }
