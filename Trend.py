@@ -3,6 +3,7 @@ from oandapyV20 import API
 import oandapyV20.endpoints.pricing as pricing
 from oandapyV20.contrib.factories import InstrumentsCandlesFactory
 import Other
+from datetime import datetime
 
 idaccount = "101-002-19058958-001"
 token = "ae2330665fa73fa2fe986faf62ffd895-2e75bde1f62ad95ada8ce0b42a77b557"
@@ -15,100 +16,56 @@ singlered = 0
 highest = 0
 lowest = 0
 
-def lower(timeframe, instrument):
-    if timeframe == "M15":
-        dict = []
-        param = {
-            "from": Other.timecheck("start"),
-            "granularity": "M15",
-        }
-        # for i in InstrumentsCandlesFactory(instrument=instrument, params=param):
-        #     client.request(i)
-        #     dict.append(i.response.get("candles"))
-        # return dict
-        with open("lowertime.json", "w") as out:
-            for i in InstrumentsCandlesFactory(instrument = instrument, params = param):
-                client.request(i)
-                out.write(json.dumps(i.response.get("candles"), indent=4))
+def pattern(closeoropen, pair):
+    datahis = Other.fetchjson("his")
+    half = Other.fetchjson("half")
+    # Possibly also include the proper color candle meaning opposite color
+    if closeoropen == "close":
+        if 59 <= Other.timecheck("hour") <= 60:
+            top = float(datahis[-2]["Top wick"])/float(datahis[-2]["body"])
+            bottom = float(datahis[-2]["Bottom wick"])/float(datahis[-2]["body"])
+            top = Other.converter("pip", top, pair)
+            bottom = Other.converter("pip", bottom, pair)
 
-    elif timeframe == "M5":
-        dict = []
-        param = {
-            "from": Other.timecheck("start"),
-            "granularity": "M5",
-        }
-        for i in InstrumentsCandlesFactory(instrument=instrument, params=param):
-            client.request(i)
-            dict.append(i.response.get("candles"))
-        return dict
-        # with open("lowertime.json", "w") as out:
-        #     for i in InstrumentsCandlesFactory(instrument=instrument, params=param):
-        #         client.request(i)
-        #         out.write(json.dumps(i.response.get("candles"), indent=4))
-def overall():
-    global highest, lowest
+            if top > 1.5 or bottom > 1.5 and abs(top - bottom) < 2:
+                return "close"
+    if closeoropen == "open":
+        top = half[-3]
+        if half[-3]:
+            pass
+
+
+def overall(pair):
     data = Other.fetchjson("his")
-    filtered = []
-    counter = 0
-    close = []
-    for i in data:
-        if counter <= 9:
-            close.append(i["mid"]["c"])
-            counter += 1
-        elif counter > 9:
-            filtered.append(close)
-            counter = 0
-            close = []
-    zones = []
-    for x in range(len(filtered)):
-        swap = []
-        # if data[x]["trend"] == "uptrend" or data[x]["trend"] == "reversal going up":
-        #     highest = float(filtered[0][0])
-        #     l = 0
-        #     while data[l]["trend"] == "uptrend" or data[l]["trend"] == "reversal going up":
-        #         l += 1
-        #     lowest = float(data[l]["mid"]["o"])
-        # elif data[x]["trend"] == "downtrend" or data[x]["trend"] == "reversal going down":
-        #     lowest = float(filtered[0][0])
-        #     l = 0
-        #     while data[l]["trend"] == "downtrend" or data[l]["trend"] == "reversal going down":
-        #         l += 1
-        #     highest = float(filtered[0][l])
-        highest = max(filtered[x])
-        lowest = min(filtered[x])
-        swap.extend([highest, lowest])
-        zones.append(swap)
-        # for y in range(9):
-        #     if float(filtered[x][y]) > highest:
-        #         highest = float(filtered[x][y])
-        #     elif float(filtered[x][y]) < lowest:
-        #         lowest = float(filtered[x][y])
-        # swap.extend([highest, lowest])
-        # zones.append(swap)
     alist = []
+
+    time = datetime.now()
+    proper = time.strftime("%d-%m-%Y %H:%M:00")
 
     # may have to move this section somewhere else to improve maybe even get rid of completely
     # because this is for historical and not current price
     previoushigh = 0
     previouslow = 0
-    orderlist = []
-    highandlow = []
-    for i in range(len(data)):
-        j = i + 1
-        if j == len(data):
-            break
-        if data[i]["color"] == "green" and data[j]["color"] == "red":
-            previoushigh = data[i]["mid"]["h"]
-        elif data[i]["color"] == "red" and data[j]["color"] == "green":
-            previouslow = data[i]["mid"]["l"]
-        # else statement is unnecessary for live price action
-        else:
-            # this part may have to change to fit the current price possibly even unncessary
-            if float(data[i]["mid"]["c"]) > float(previoushigh):
-                orderlist.append([data[i]["time"], "buy", previoushigh])
-            elif float(data[i]["mid"]["c"]) < float(previouslow):
-                orderlist.append([data[i]["time"], "sell", previouslow])
-        highandlow.append([previoushigh, previouslow])
+    highandlow = Other.fetchjson("important")
+    if Other.timecheck("hour") == 60 or Other.timecheck("hour") == 30:
+        if data[-1]["color"] == "green" and data[-2]["color"] == "red":
+            previouslow = data[-2]["mid"]["l"]
+        elif data[-1]["color"] == "red" and data[-2]["color"] == "green":
+            previoushigh = data[-2]["mid"]["h"]
+    if previouslow != 0 or previoushigh != 0:
+        highandlow[pair].append([previoushigh, previouslow, proper])
+        Other.write("important", highandlow)
+        print("get")
+
+    # for i in range(len(data)):
+    #     j = i + 1
+    #     if j == len(data):
+    #         break
+    #     if data[i]["color"] == "green" and data[j]["color"] == "red":
+    #         previoushigh = data[i]["mid"]["h"]
+    #     elif data[i]["color"] == "red" and data[j]["color"] == "green":
+    #         previouslow = data[i]["mid"]["l"]
+    #     highandlow.append([previoushigh, previouslow])
     # this next section could be removed, not really necessary but leave it for now
     for i in range(len(data)):
         j = i + 1
@@ -121,7 +78,6 @@ def overall():
     with open("Historicaldata.json", "w") as out:
         out.write(json.dumps(data, indent = 4))
     # as of right now orderlist is not needed but leave it as things can change
-    return zones, orderlist, highandlow
 
 def trendassign(listnum):
     global state, changetime, pullbackup, pullbackdown, singlered
@@ -243,6 +199,17 @@ def trendprep():
     uptrendlist = uptransfer
 
     return uptrendlist, downtrendlist
+
+def halfdump(instrument):
+    start = Other.hourstart()
+    param = {
+        "from": start,
+        "granularity": "M30"
+    }
+    with open("Half.json".format(instrument, "M30"), "w") as out:
+        for i in InstrumentsCandlesFactory(instrument = instrument, params = param):
+            client.request(i)
+            out.write(json.dumps(i.response.get("candles"), indent = 4))
 
 def dumphist(instrument, gran):
     result = Other.propertimestart()
