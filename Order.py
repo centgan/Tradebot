@@ -3,7 +3,18 @@ import Other
 from datetime import datetime
 fullstop = None
 
-
+if len(orderdata[pair]) == 0:
+    orderdata[pair].append(
+        ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+    print("enter buy at", bid, sl, pair)
+    Other.write("order", orderdata)
+    Meta.place(pair, str(sl), str(takeprofit("buy", cur["mid"]["c"], pair)), "buy")
+elif len(orderdata[pair]) >= 1 and orderdata[pair][-1][5] != prehigh:
+    orderdata[pair].append(
+        ["buy", bid, sl, takeprofit("buy", cur["mid"]["c"], pair), pair, prehigh, proper, "open"])
+    print("enter buy at", bid, sl, pair)
+    Other.write("order", orderdata)
+    Meta.place(pair, str(sl), str(takeprofit("buy", cur["mid"]["c"], pair)), "buy")
 # The information here is for current price
 def stoploss(sellorbuy):
     data = Other.fetchjson("his")
