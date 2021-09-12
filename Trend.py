@@ -5,8 +5,8 @@ from oandapyV20.contrib.factories import InstrumentsCandlesFactory
 import Other
 from datetime import datetime
 
-idaccount = "101-002-19058958-001"
-token = "ae2330665fa73fa2fe986faf62ffd895-2e75bde1f62ad95ada8ce0b42a77b557"
+idaccount = ""
+token = ""
 client = API(access_token = token)
 state = ""
 changetime = ""
