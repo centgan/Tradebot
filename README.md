@@ -1,5 +1,5 @@
 # Tradebot
-Just a trading bot to make passive income
+Just a trading bot to make passive income. This uses my own alogrithm that I designed and developed. 
 
 Order.py has been modtified from main branch
 The main branch is dog shit but left it because there may be a time where I have to go back to where I began
